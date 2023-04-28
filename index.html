@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>youtube-dl</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    </head>
+    <body>
+        <a class="github-fork-ribbon right-bottom fixed" href="https://github.com/knudo/ytdl" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+        <div class="container my-4">
+            <div class="mx-auto">
+                <form action="" onsubmit="load(); return false;" id="form">
+                    <div class="input-group">
+                        <input type="url" id="url" name="url" autocomplete="off" class="form-control shadow-none" placeholder="Content's url" aria-label="Content's url" autofocus required>
+                        <button class="btn btn-success" type="submit" id="button-submit"><i class="bi bi-arrow-return-left"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="container my-2">
+            
+            <div class="text-danger my-2" id="error"></div>
+            
+            <div class="card mb-3" >
+                <div class="card-header p-2" id="title">Plataforma - Titulo</div>
+                <div class="card-body p-2">
+
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="formats-tab" data-bs-toggle="tab" data-bs-target="#formats" type="button" role="tab" aria-controls="home" aria-selected="true">Download</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="json-tab" data-bs-toggle="tab" data-bs-target="#json" type="button" role="tab" aria-controls="contact" aria-selected="false">JSON</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="formats" role="tabpanel" aria-labelledby="formats-tab">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Format</th>
+                                        <th scope="col" class="hide">Resolution</th>
+                                        <th scope="col">Ext.</th>
+                                        <th scope="col" class="hide">Bitrate</th>
+                                        <th scope="col" class="text-nowrap">Size(MB)</th>
+                                        <th scope="col">Down.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="formatList"></tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="json" role="tabpanel" aria-labelledby="json-tab">
+                            <pre id="json-content" style="overflow: auto;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+        <script type="application/javascript">
+            const url = document.getElementById('url');
+            const result = document.getElementById('json-content');
+            const form = document.getElementById('form');
+            const submit = document.getElementById('button-submit');
+            const title = document.getElementById('title');
+            const error = document.getElementById('error');
+            const formatList = document.getElementById('formatList');
+            
+            url.addEventListener('focus', () => {
+                url.select();
+            });            
+
+            function load(){
+                // makes a spinner icon visible
+                submit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                submit.disabled = true;
+
+                // sends the provided url and pulls a json with the output of yt-dlp
+                fetch(`/?url=${encodeURIComponent(url.value)}`)
+                .then((response) => {
+                    if(!response.ok){
+                        return Promise.reject(response.status);
+                    }else{
+                        response.json()
+                        .then((json) => {
+                            submit.innerHTML = '<i class="bi bi-arrow-return-left"></i>';
+                            submit.disabled = false;
+                            
+                            displayData(json);
+                        });
+                    }
+                })
+                .catch((message) => {
+                    // in case something goes wrong with the query
+                    error.textContent = message;
+                    submit.innerHTML = '<i class="bi bi-arrow-return-left"></i>';
+                    submit.disabled = false;
+                });
+                
+                return false;
+            }
+            
+            function displayData(data){
+                // clear the table from possible old values
+                formatList.innerHTML = '';
+                title.textContent = data.title;
+                
+                // iterate the received formats appending new lines
+                for(format of data.formats){
+                    formatList.innerHTML += `<a href="${format.url || ''}" target="_blank"><tr>
+                            <td scope="col">${format.format || ''}</td>
+                            <td scope="col" class="hide">${format.format_note || ''}</td>
+                            <td scope="col">${format.ext || ''}</td>
+                            <td scope="col" class="hide">${format.tbr || ''}</td>
+                            <td scope="col">${(format.filesize ? ((format.filesize / 1048576).toFixed(1)) : '--')}</td>
+                            <td scope="col"><a href="${format.url || ''}" target="_blank"><button type="button" class="btn btn-primary"><i class="bi bi-cloud-arrow-down"></i></button></a></td>
+                        </tr></a>`;
+                }
+                
+                result.textContent = JSON.stringify(data, null, 2);
+            }
+        </script>
+        
+        <style>
+            // hiding some columns on smaller screens
+            @media only screen and (max-width: 600px) {
+                .hide{
+                    display: none;
+                }
+            }
+            
+        </style>
+    </body>
+</html>
