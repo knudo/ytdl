@@ -47,7 +47,7 @@
                                         <th scope="col" class="hide">Resolution</th>
                                         <th scope="col">Ext.</th>
                                         <th scope="col" class="hide">Bitrate</th>
-                                        <th scope="col" class="text-nowrap">Size(MB)</th>
+                                        <th scope="col" class="text-nowrap">Size</th>
                                         <th scope="col">Down.</th>
                                     </tr>
                                 </thead>
@@ -83,7 +83,7 @@
                 submit.disabled = true;
 
                 // sends the provided url and pulls a json with the output of yt-dlp
-                fetch(`/?url=${encodeURIComponent(url.value)}`)
+                fetch(`/?url=${encodeURIComponent(url.value)}`, {method : 'POST'})
                 .then((response) => {
                     if(!response.ok){
                         return Promise.reject(response.status);
@@ -114,22 +114,28 @@
                 
                 // iterate the received formats appending new lines
                 for(format of data.formats){
+                    let size = (format.filesize || format.filesize_approx);
+                    size = (size ? (size / 1048576).toFixed(1) + 'MB' : '--');
                     formatList.innerHTML += `<a href="${format.url || ''}" target="_blank"><tr>
                             <td scope="col">${format.format || ''}</td>
                             <td scope="col" class="hide">${format.format_note || ''}</td>
                             <td scope="col">${format.ext || ''}</td>
                             <td scope="col" class="hide">${format.tbr || ''}</td>
-                            <td scope="col">${(format.filesize ? ((format.filesize / 1048576).toFixed(1)) : '--')}</td>
+                            <td scope="col" class="text-nowrap">${size}</td>
                             <td scope="col"><a href="${format.url || ''}" target="_blank"><button type="button" class="btn btn-primary"><i class="bi bi-cloud-arrow-down"></i></button></a></td>
                         </tr></a>`;
                 }
                 
                 result.textContent = JSON.stringify(data, null, 2);
+                
+                for(const key in data){
+                    console.log(`${key}: ${data[key]}`);
+                }
+                
             }
         </script>
         
         <style>
-            // hiding some columns on smaller screens
             @media only screen and (max-width: 600px) {
                 .hide{
                     display: none;

@@ -6,7 +6,7 @@ const ytdl = require('youtube-dl-exec');
 const app = express()
 const port = 3001
 
-app.get('/', async (req, res) => {
+app.post('/', (req, res) => {
     if(req.query.url){
         console.log(`checking ${req.query.url}`);
         
@@ -14,11 +14,13 @@ app.get('/', async (req, res) => {
             dumpSingleJson: true,
             noCheckCertificates: true,
             noWarnings: true,
+            formatSort: 'ext'
         }).then(output => res.send(output));
-        
-    }else{
-        res.sendFile(path.join(__dirname, '/index.html'));
     }
+});
+
+app.get('/', async (req, res) => {
+    res.sendFile(path.join(__dirname, '/index.html'));
 })
 
 app.listen(port, () => {
